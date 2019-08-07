@@ -1,6 +1,28 @@
+const symbolMap = {
+    "+": "$plus",
+    "-": "$minus",
+    "*": "$star",
+    "/": "$slash",
+    "^": "$carot",
+    "?": "$question",
+    "=": "$eq",
+    "<": "$lt",
+    ">": "$gt",
+    "\\": "$backslash",
+    "&": "$and",
+    "|": "$or",
+    "%": "$percent",
+    "'": "$quote",
+    "!": "$exclam"
+};
+const symbolRegExps = Object.keys(symbolMap).map(x => {
+    const res = new RegExp(`\\${x}`, "g");
+    res.str = symbolMap[x];
+    return res;
+});
+//@ts-check
 const unicodeEscapementRegExp = /\\u\{([0-9A-F]{4,6})\}/g;
 const newLineRegExp = /\n|\r\n?/;
-//@ts-check
 /*
 Capturing Group:
 [1] Whitespace
@@ -11,10 +33,10 @@ Capturing Group:
 [6] Number
 [7] Punctuator
 */
-const tokenRegExp = /(\u0020+|\t+)|(#.*)|("(?:[^"\\]|\\(?:[nr"\\]|u\{[0-9A-F]{4,6}\}))*")|\b(let|loop|if|elif|else|func|break|import|export|match|return|def|try|on|settle|raise|importstd)\b|([A-Za-z_+\-/*%&|?^=<>'!][A-Za-z0-9+\-/*%&|?^<>='!]*)|(-?[\d_]+(?:\.[\d_]+)?(?:e\-?[\d_]+)?)|(\.{3}|[(),.{}\[\]:])/y;
+const tokenRegExp = /(\u0020+|\t+)|(#.*)|("(?:[^"\\]|\\(?:[nr"\\]|u\{[0-9A-F]{4,6}\}))*")|\b(let|loop|if|else|func|break|import|export|match|return|def|try|on|settle|raise|importstd|meta|enter|exit|operator|hoist)\b|([A-Za-z_+\-/*%&|?^=<>'!][A-Za-z_0-9+\-/*%&|?^<>='!]*)|((?:0[box])?-?\d[\d_]*(?:\.[\d_]+)?(?:e\-?[\d_]+)?[a-z]*)|(\.{3}|[$(),.{}\[\]:])/y;
 /**
  * Create a token generator for a specific source.
- * @param {string} source If string is provided, string is split along newlines. If array is provided, array is used as the array of lines.
+ * @param {string | Array<string>} source If string is provided, string is split along newlines. If array is provided, array is used as the array of lines.
  * @param {boolean} comment Should comments be tokenized and returned from the generator?
  * @returns {() => void | {id: string, lineNumber: number, columnNumber: number, string ?: string, columnTo ?: number, readonly ?: boolean, alphanumeric ?: boolean, number ?: number}} A function that generates the next token.
  */
@@ -108,6 +130,17 @@ function tokenize(source, comment = false) {
         // Name Matched
         if (captives[5]) {
             let res = captives[5];
+            if (/\-\d+/.test(res)) {
+                return {
+                    id: "(number)",
+                    readonly: true,
+                    number: Number(res.replace(/(?:[^\d])([^0])[a-z]+/g, "$1").replace(/[a-z]$/, "").replace(/_/g, "")),
+                    string: res,
+                    lineNumber,
+                    columnNumber,
+                    columnTo
+                };
+            }
             dotLast = false;
             return {
                 id: res,
@@ -123,7 +156,7 @@ function tokenize(source, comment = false) {
             return {
                 id: "(number)",
                 readonly: true,
-                number: Number(captives[6].replace(/_/g, "")),
+                number: Number(captives[6].replace(/(?:[^\d])([^0])[a-z]+/g, "$1").replace(/[a-z]$/, "").replace(/_/g, "")),
                 string: captives[6],
                 lineNumber,
                 columnNumber,
@@ -146,4 +179,5 @@ function tokenize(source, comment = false) {
         }
     }
 }
+
 export default Object.freeze(tokenize);
