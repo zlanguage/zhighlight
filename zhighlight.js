@@ -70,4 +70,4 @@ function main() {
     })
 }
 
-export defualt main;
+export default main;
