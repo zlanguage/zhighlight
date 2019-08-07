@@ -10,7 +10,7 @@ function stringify(tok) {
     if (tok.id === "(number)") {
         return `<span style="color:#09885a">${tok.string}</span>`
     }
-    if (tok.id === "(keyword)" || tok.id === "=>") {
+    if (tok.id === "(keyword)" || tok.id === "=>" || tok.id === "<-") {
         return `<span style="color:#0000ff">${tok.string ? tok.string : tok.id}</span>`
     }
     if (tok.alphanumeric) {
@@ -48,7 +48,6 @@ function syntaxHighlight(code) {
     let addedLength = 0;
     for (let tok, prevTok = {};
         (tok = tokGen()) !== undefined;) {
-        console.log(tok)
         if (prevTok.lineNumber !== tok.lineNumber) {
             addedLength = 0;
         }
@@ -70,4 +69,5 @@ function main() {
         codeBlock.innerHTML = syntaxHighlight(theZ);
     })
 }
-window.onload = main;
+
+export defualt main;
